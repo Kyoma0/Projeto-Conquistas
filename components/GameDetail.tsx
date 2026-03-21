@@ -40,7 +40,9 @@ const BuilderBlock: React.FC<{
 
   const widthClasses = {
     '25%': 'md:w-1/4',
+    '33%': 'md:w-1/3',
     '50%': 'md:w-1/2',
+    '66%': 'md:w-2/3',
     '75%': 'md:w-3/4',
     '100%': 'w-full',
   };
@@ -67,7 +69,9 @@ const BuilderBlock: React.FC<{
                   <label className="text-[9px] text-gray-500 font-black uppercase mb-1 block">Largura</label>
                   <select className="w-full bg-black/40 border border-transparent rounded-lg p-3 text-white text-xs outline-none focus:border-steam-highlight" value={tempValue.width} onChange={e => setTempValue({...tempValue, width: e.target.value as any})}>
                     <option value="25%">25% (Pequeno)</option>
+                    <option value="33%">33% (1/3)</option>
                     <option value="50%">50% (Médio)</option>
+                    <option value="66%">66% (2/3)</option>
                     <option value="75%">75% (Grande)</option>
                     <option value="100%">100% (Largura Total)</option>
                   </select>
@@ -125,7 +129,7 @@ const BuilderBlock: React.FC<{
   };
 
   return (
-    <div className={`group relative mb-8 animate-fade-in ${widthClasses[content.width || '100%']} ${content.alignment === 'center' ? 'mx-auto' : ''}`}>
+    <div className={`group relative mb-8 animate-fade-in ${widthClasses[content.width || '100%']} ${content.alignment === 'center' ? 'mx-auto' : content.alignment === 'right' ? 'ml-auto' : 'mr-auto'}`}>
       {/* CONTROLES INLINE */}
       {isEditMode && (
         <div className="absolute top-3 right-3 flex flex-row gap-2 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
@@ -227,7 +231,7 @@ const AchievementModal: React.FC<{
       title: 'Nova Seção',
       type: type,
       content: type === 'text' ? 'Digite aqui seu guia detalhado...' : 'https://youtube.com/embed/dQw4w9WgXcQ',
-      synopsis: (type === 'image' || type === 'video') ? 'Explicação rápida do contexto desta mídia.' : undefined,
+      synopsis: (type === 'image' || type === 'video') ? 'Explicação rápida do contexto desta mídia.' : '',
       author: currentUser?.name || 'Admin',
       order: order,
       width: '100%',
@@ -512,7 +516,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ game, onNavigateProfile 
       title: 'Novo Extra',
       type: type,
       content: type === 'text' ? 'Digite aqui seu conteúdo extra...' : 'https://youtube.com/embed/dQw4w9WgXcQ',
-      synopsis: (type === 'image' || type === 'video') ? 'Explicação rápida do contexto.' : undefined,
+      synopsis: (type === 'image' || type === 'video') ? 'Explicação rápida do contexto.' : '',
       author: currentUser?.name || 'Admin',
       order: order,
       width: '100%',
@@ -555,6 +559,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ game, onNavigateProfile 
         <img 
           src={game.bannerUrl} 
           className="w-full h-full object-cover scale-105 blur-[2px] opacity-40" 
+          style={{ objectPosition: game.bannerPosition || 'center' }}
           alt="Banner" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-steam-base via-steam-base/60 to-transparent"></div>
@@ -564,6 +569,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ game, onNavigateProfile 
               <img 
                 src={game.coverUrl} 
                 className="w-48 h-72 object-cover rounded-xl shadow-4xl border-2 border-transparent relative z-10" 
+                style={{ objectPosition: game.coverPosition || 'center' }}
                 alt={game.title} 
               />
               <div className="flex-1">

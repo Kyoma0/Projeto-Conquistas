@@ -971,7 +971,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addStoreItem = async (item: StoreItem) => {
     try {
-      await setDoc(doc(db, 'storeItems', item.id), item);
+      await setDoc(doc(db, 'storeItems', item.id), sanitize(item));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `storeItems/${item.id}`);
     }
@@ -979,7 +979,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateStoreItem = async (item: StoreItem) => {
     try {
-      await setDoc(doc(db, 'storeItems', item.id), item);
+      await setDoc(doc(db, 'storeItems', item.id), sanitize(item));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `storeItems/${item.id}`);
     }
@@ -998,7 +998,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addEvent = async (event: GameEvent) => {
     try {
-      await setDoc(doc(db, 'events', event.id), event);
+      await setDoc(doc(db, 'events', event.id), sanitize(event));
       showToast("Evento publicado com sucesso!", "success");
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `events/${event.id}`);
@@ -1007,7 +1007,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateEvent = async (event: GameEvent) => {
     try {
-      await setDoc(doc(db, 'events', event.id), event);
+      await setDoc(doc(db, 'events', event.id), sanitize(event));
       showToast("Evento atualizado!", "success");
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `events/${event.id}`);
@@ -1124,7 +1124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addGame = async (game: Game) => {
     try {
-      await setDoc(doc(db, 'games', game.id), game);
+      await setDoc(doc(db, 'games', game.id), sanitize(game));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `games/${game.id}`);
     }
@@ -1132,7 +1132,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateGame = async (game: Game) => {
     try {
-      await setDoc(doc(db, 'games', game.id), game);
+      await setDoc(doc(db, 'games', game.id), sanitize(game));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `games/${game.id}`);
     }
@@ -1150,7 +1150,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addAchievement = async (achievement: Achievement) => {
     try {
-      await setDoc(doc(db, 'achievements', achievement.id), achievement);
+      await setDoc(doc(db, 'achievements', achievement.id), sanitize(achievement));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `achievements/${achievement.id}`);
     }
@@ -1158,7 +1158,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateAchievement = async (achievement: Achievement) => {
     try {
-      await setDoc(doc(db, 'achievements', achievement.id), achievement);
+      await setDoc(doc(db, 'achievements', achievement.id), sanitize(achievement));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `achievements/${achievement.id}`);
     }
@@ -1309,9 +1309,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return await api.getSteamAuthUrl();
   };
 
+  const sanitize = (obj: any) => {
+    const newObj = { ...obj };
+    Object.keys(newObj).forEach(key => {
+      if (newObj[key] === undefined) {
+        delete newObj[key];
+      }
+    });
+    return newObj;
+  };
+
   const addContent = async (content: Content) => {
     try {
-      await setDoc(doc(db, 'contents', content.id), content);
+      await setDoc(doc(db, 'contents', content.id), sanitize(content));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `contents/${content.id}`);
     }
@@ -1319,7 +1329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateContent = async (content: Content) => {
     try {
-      await setDoc(doc(db, 'contents', content.id), content);
+      await setDoc(doc(db, 'contents', content.id), sanitize(content));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `contents/${content.id}`);
     }

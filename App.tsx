@@ -58,7 +58,11 @@ const GameGrid = ({ title, games, onSelectGame }: { title: string, games: any[],
                     {games.map(game => (
                         <div key={game.id} onClick={() => onSelectGame(game.id)} className="cursor-pointer group relative">
                             <div className="relative overflow-hidden rounded-xl shadow-2xl aspect-[2/3] border border-transparent group-hover:border-steam-highlight/50 transition-all">
-                                <img src={game.coverUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                <img 
+                                  src={game.coverUrl} 
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                  style={{ objectPosition: game.coverPosition || 'center' }}
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-10 transition-opacity flex items-end p-4">
                                     <span className="text-[10px] font-black text-steam-highlight uppercase tracking-[0.2em]">Ver Central</span>
                                 </div>
@@ -98,6 +102,39 @@ const AppContent: React.FC = () => {
   const [view, setView] = useState<'home' | 'game' | 'admin' | 'profile' | 'library' | 'favorites' | 'lives' | 'friends' | 'chat' | 'store' | 'ads' | 'events' | 'communities'>('home');
   
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot' | 'reset'>('login');
+
+  // Injetar estilos dinâmicos (cores e fontes)
+  useEffect(() => {
+    const root = document.documentElement;
+    if (systemSettings.primaryColor) root.style.setProperty('--steam-highlight', systemSettings.primaryColor);
+    if (systemSettings.secondaryColor) root.style.setProperty('--steam-dark', systemSettings.secondaryColor);
+    if (systemSettings.accentColor) root.style.setProperty('--steam-green', systemSettings.accentColor);
+    if (systemSettings.borderRadius) root.style.setProperty('--steam-radius', systemSettings.borderRadius);
+    if (systemSettings.fontFamily) root.style.setProperty('--font-sans', systemSettings.fontFamily);
+
+    // Injetar fontes customizadas
+    const styleId = 'custom-fonts-styles';
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+
+    if (systemSettings.customFonts && systemSettings.customFonts.length > 0) {
+      const fontFaces = systemSettings.customFonts.map(font => `
+        @font-face {
+          font-family: '${font.name}';
+          src: url('${font.url}') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+        }
+      `).join('\n');
+      styleElement.textContent = fontFaces;
+    } else {
+      styleElement.textContent = '';
+    }
+  }, [systemSettings]);
   const [emailInput, setEmailInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');

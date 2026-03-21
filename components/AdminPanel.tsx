@@ -3,6 +3,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { api } from '../backend';
 import { chunkedUpload } from '../services/uploadService';
+import { db, doc, collection, writeBatch } from '../firebase';
 import { Game, Achievement, Content, Difficulty, ContentType, AchievementStatus, UserAchievementProgress, Feedback, RewardRoomSettings, SystemSettings, StoreItem, GameEvent, Transaction, LevelConfig } from '../types';
 import { Shield, Plus, Save, Trash2, Edit2, Gamepad2, Trophy, Video, ArrowLeft, Image as ImageIcon, BookOpen, Lightbulb, Users, BarChart2, EyeOff, FolderOpen, CheckCircle2, XCircle, Clock, Settings, Layout, ExternalLink, MessageSquare, History, PlayCircle, Zap, Upload, Download, Database, RotateCcw, Ban, UserCheck, Loader2, UserMinus, ShieldAlert, Gem, Eye, Tv, Coins, Settings2, Power, Receipt, Percent, ShieldBan, Search, MonitorCheck, Library, Heart, Radio, ShoppingBag, Star, Info, EyeIcon, EyeOffIcon, Copy, X, Calendar, Mail, Send } from 'lucide-react';
 
@@ -71,6 +72,7 @@ export const AdminPanel: React.FC<{ onViewUserProfile: (userId: string) => void 
   const gameCoverFileInputRef = useRef<HTMLInputElement>(null);
   const gameBannerFileInputRef = useRef<HTMLInputElement>(null);
   const achIconFileInputRef = useRef<HTMLInputElement>(null);
+  const fontFileInputRef = useRef<HTMLInputElement>(null);
 
   // Configurações locais para formulário de recompensas
   const [localRewardSettings, setLocalRewardSettings] = useState<RewardRoomSettings>(rewardSettings);
@@ -200,6 +202,29 @@ export const AdminPanel: React.FC<{ onViewUserProfile: (userId: string) => void 
         setEditingAchievement(prev => prev ? { ...prev, icon: reader.result as string } : null);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadProgress(0);
+    try {
+      const url = await chunkedUpload(file, (progress) => setUploadProgress(progress));
+      const fontName = file.name.split('.')[0];
+      const newFont = { name: fontName, url };
+      
+      const currentFonts = pendingSettings?.customFonts || systemSettings.customFonts || [];
+      setPendingSettings({
+        ...pendingSettings,
+        customFonts: [...currentFonts, newFont]
+      });
+      showToast(`Fonte "${fontName}" carregada!`, "success");
+    } catch (err) {
+      showToast("Erro no upload da fonte.", "error");
+    } finally {
+      setUploadProgress(null);
     }
   };
 
@@ -1097,7 +1122,56 @@ export const AdminPanel: React.FC<{ onViewUserProfile: (userId: string) => void 
                       <option value="'Space Grotesk'">Space Grotesk (Futurista)</option>
                       <option value="system-ui">Sistema (Nativo)</option>
                       <option value="serif">Serifada (Clássica)</option>
+                      {(pendingSettings?.customFonts || systemSettings.customFonts || []).map(font => (
+                        <option key={font.name} value={font.name}>{font.name} (Customizada)</option>
+                      ))}
                     </select>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Fontes Customizadas</label>
+                      <button 
+                        onClick={() => fontFileInputRef.current?.click()}
+                        className="p-2 bg-steam-highlight/10 text-steam-highlight rounded-lg hover:bg-steam-highlight hover:text-steam-dark transition-all"
+                        title="Fazer upload de fonte (.ttf, .woff, .woff2)"
+                      >
+                        <Upload className="w-4 h-4" />
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={fontFileInputRef} 
+                        className="hidden" 
+                        accept=".ttf,.woff,.woff2" 
+                        onChange={handleFontUpload} 
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      {(pendingSettings?.customFonts || systemSettings.customFonts || []).map((font, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-transparent group">
+                          <div className="flex items-center gap-3">
+                            <BookOpen className="w-4 h-4 text-gray-500" />
+                            <span className="text-[10px] font-black text-gray-300 uppercase tracking-tight">{font.name}</span>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const currentFonts = pendingSettings?.customFonts || systemSettings.customFonts || [];
+                              const updatedFonts = currentFonts.filter((_, i) => i !== idx);
+                              setPendingSettings({ ...pendingSettings, customFonts: updatedFonts });
+                            }}
+                            className="p-1.5 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      {(pendingSettings?.customFonts || systemSettings.customFonts || []).length === 0 && (
+                        <div className="text-center py-4 border-2 border-dashed border-white/5 rounded-xl">
+                          <p className="text-[8px] text-gray-600 font-black uppercase tracking-widest">Nenhuma fonte customizada</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="p-4 bg-black/20 rounded-2xl border border-transparent">
@@ -1135,7 +1209,11 @@ export const AdminPanel: React.FC<{ onViewUserProfile: (userId: string) => void 
                     <div className="grid gap-4">
                     {games.map(game => (
                         <div key={game.id} className="bg-steam-dark p-5 rounded-xl border border-transparent flex items-center gap-6 hover:border-steam-highlight/30 transition-all group shadow-md">
-                            <img src={game.coverUrl} className="w-12 h-16 object-cover rounded border border-transparent" />
+                            <img 
+                              src={game.coverUrl} 
+                              className="w-12 h-16 object-cover rounded border border-transparent" 
+                              style={{ objectPosition: game.coverPosition || 'center' }}
+                            />
                             <div className="flex-1">
                                 <h3 className="font-black text-white text-lg tracking-tight uppercase leading-none mb-1">{game.title}</h3>
                                 <p className="text-[10px] text-steam-highlight font-black uppercase tracking-widest">{game.publisher} • {achievements.filter(a => a.gameId === game.id).length} Conquistas</p>
@@ -1375,6 +1453,26 @@ export const AdminPanel: React.FC<{ onViewUserProfile: (userId: string) => void 
                       <button type="button" onClick={() => gameBannerFileInputRef.current?.click()} className="bg-steam-highlight text-steam-dark p-3 rounded-lg"><Upload className="w-4 h-4"/></button>
                       <input type="file" ref={gameBannerFileInputRef} className="hidden" accept="image/*" onChange={e => handleGameFileUpload(e, 'bannerUrl')} />
                     </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-500 font-black uppercase mb-1 block">Posicionamento da Capa (Ex: center, top, 50% 20%)</label>
+                    <input 
+                      className="w-full bg-[#171a21] border border-transparent rounded-lg p-3 text-white text-sm outline-none focus:border-steam-highlight" 
+                      value={editingGame?.coverPosition || ''} 
+                      onChange={e => setEditingGame({...editingGame, coverPosition: e.target.value})} 
+                      placeholder="center" 
+                      disabled={isSaving} 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-gray-500 font-black uppercase mb-1 block">Posicionamento do Banner (Ex: center, top, 50% 20%)</label>
+                    <input 
+                      className="w-full bg-[#171a21] border border-transparent rounded-lg p-3 text-white text-sm outline-none focus:border-steam-highlight" 
+                      value={editingGame?.bannerPosition || ''} 
+                      onChange={e => setEditingGame({...editingGame, bannerPosition: e.target.value})} 
+                      placeholder="center" 
+                      disabled={isSaving} 
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] text-gray-500 font-black uppercase mb-1 block">Steam AppID (Opcional)</label>

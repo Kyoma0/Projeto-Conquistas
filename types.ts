@@ -139,6 +139,7 @@ export interface SystemSettings {
   accentColor?: string;
   borderRadius?: string;
   fontFamily?: string;
+  customFonts?: { name: string; url: string }[];
 }
 
 export interface ProfileWallpaper {
@@ -251,7 +252,7 @@ export interface Content {
   synopsis?: string;
   author: string;
   order: number;
-  width?: '25%' | '50%' | '75%' | '100%';
+  width?: '25%' | '33%' | '50%' | '66%' | '75%' | '100%';
   alignment?: 'left' | 'right' | 'center' | 'top' | 'bottom';
   updatedAt?: string;
 }
@@ -265,6 +266,8 @@ export interface Game {
   totalAchievements: number;
   isActive: boolean;
   steamAppId?: string;
+  coverPosition?: string;
+  bannerPosition?: string;
 }
 
 export interface ToastMessage {
