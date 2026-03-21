@@ -1,0 +1,237 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId
+    // Fields:
+    //   - id: string (required)
+    //   - email: string (required, email)
+    //   - name: string (required)
+    //   - avatar: string
+    //   - isAdmin: boolean
+    //   - isBanned: boolean
+    //   - isVip: boolean
+    //   - vipUntil: timestamp
+    //   - bio: string
+    //   - profileBackground: string
+    //   - libraryGameIds: list of strings
+    //   - favoriteGameIds: list of strings
+    //   - friendIds: list of strings
+    //   - ownedItemIds: list of strings
+    //   - balance: number
+    //   - xp: number
+    //   - steamId: string
+    //
+    // Collection: games
+    // Document ID: gameId
+    // Fields:
+    //   - id: string (required)
+    //   - title: string (required)
+    //   - publisher: string
+    //   - coverUrl: string
+    //   - bannerUrl: string
+    //   - totalAchievements: number
+    //   - isActive: boolean
+    //   - steamAppId: string
+    //
+    // Collection: achievements
+    // Document ID: achievementId
+    // Fields:
+    //   - id: string (required)
+    //   - gameId: string (required)
+    //   - name: string (required)
+    //   - description: string
+    //   - icon: string
+    //   - xp: number
+    //   - isHidden: boolean
+    //   - difficulty: string (enum)
+    //   - steamApiName: string
+    //
+    // [Other collections follow similar patterns]
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true) ||
+          (request.auth.token.email == "ga.albergoni@gmail.com" && request.auth.token.email_verified == true)
+        );
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && hasRequiredFields(['id', 'email', 'name']) && request.resource.data.get('isAdmin', false) == false;
+      allow update: if (isOwner(userId) && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)) || isAdmin();
+      allow delete: if isAdmin();
+
+      match /progress/{achievementId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+
+      match /private/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /goals/{goalId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.get('userId', '') || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.get('userId', '');
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.get('userId', '') || isAdmin());
+    }
+
+    match /games/{gameId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /contents/{contentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /adminBalanceLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+    }
+
+    match /feedbacks/{feedbackId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin() || request.auth.uid == resource.data.userId;
+    }
+
+    match /storeItems/{itemId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid in resource.data.get('participants', []) || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.get('senderId', '');
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAdmin(); // Only admin can create transactions directly (or via server-side logic which we don't have here)
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid in resource.data.get('participants', []) || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.get('senderId', '');
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.get('receiverId', '');
+      allow delete: if isAuthenticated() && (
+        request.auth.uid in resource.data.get('participants', []) || 
+        isAdmin()
+      );
+    }
+
+    match /communityGroups/{groupId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.ownerUserId || isAdmin());
+      allow delete: if isAdmin();
+
+      match /members/{userId} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+      }
+
+      match /posts/{postId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      }
+    }
+
+    match /{path=**}/posts/{postId} {
+      allow read: if true;
+    }
+
+    match /{path=**}/members/{userId} {
+      allow read: if true;
+    }
+
+    match /generalNotifications/{notificationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /generalNotificationsRead/{readId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+
+    match /levels/{levelId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /wallpapers/{wallpaperId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /pendingValidations/{validationId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.get('userId', ''));
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /validationLogs/{logId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.get('userId', ''));
+      allow create: if isAdmin();
+    }
+  }
+}

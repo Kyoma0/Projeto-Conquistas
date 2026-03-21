@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Achievement Hub Pro Ultra Original 25/09",
+  "description": "A Steam-inspired game achievement tracking platform with guides, videos, and community tips.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

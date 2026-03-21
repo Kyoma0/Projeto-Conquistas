@@ -1,0 +1,474 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and account information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
+        "isBanned": { "type": "boolean" },
+        "isVip": { "type": "boolean" },
+        "vipUntil": { "type": "string", "format": "date-time" },
+        "bio": { "type": "string" },
+        "profileBackground": { "type": "string" },
+        "libraryGameIds": { "type": "array", "items": { "type": "string" } },
+        "favoriteGameIds": { "type": "array", "items": { "type": "string" } },
+        "friendIds": { "type": "array", "items": { "type": "string" } },
+        "ownedItemIds": { "type": "array", "items": { "type": "string" } },
+        "balance": { "type": "number" },
+        "xp": { "type": "number" },
+        "steamId": { "type": "string" }
+      },
+      "required": ["id", "email", "name"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "Game catalog entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "publisher": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "bannerUrl": { "type": "string" },
+        "totalAchievements": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "steamAppId": { "type": "string" }
+      },
+      "required": ["id", "title"]
+    },
+    "Achievement": {
+      "title": "Achievement",
+      "description": "Achievement definition for a game",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gameId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "xp": { "type": "number" },
+        "isHidden": { "type": "boolean" },
+        "difficulty": { "type": "string", "enum": ["Fácil", "Médio", "Difícil", "Extremo"] },
+        "steamApiName": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "gameId", "name"]
+    },
+    "UserAchievementProgress": {
+      "title": "UserAchievementProgress",
+      "description": "Progress of a user in a specific achievement",
+      "type": "object",
+      "properties": {
+        "achievementId": { "type": "string" },
+        "status": { "type": "string", "enum": ["LOCKED", "IN_PROGRESS", "IN_ANALYSIS", "COMPLETED"] },
+        "currentValue": { "type": "number" },
+        "targetValue": { "type": "number" },
+        "notes": { "type": "string" },
+        "proofUrl": { "type": "string" },
+        "validatedMethod": { "type": "string", "enum": ["manual", "visual_steam"] },
+        "validatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["achievementId", "status"]
+    },
+    "Content": {
+      "title": "Content",
+      "description": "Guide content, images, or videos for achievements",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gameId": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["video", "image", "text", "tip", "list", "alert"] },
+        "content": { "type": "string" },
+        "synopsis": { "type": "string" },
+        "author": { "type": "string" },
+        "order": { "type": "number" },
+        "width": { "type": "string", "enum": ["25%", "50%", "75%", "100%"] },
+        "alignment": { "type": "string", "enum": ["left", "right", "center", "top", "bottom"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "gameId", "title", "type", "content"]
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Comment on an achievement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "comment": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "achievementId", "userId", "comment"]
+    },
+    "StoreItem": {
+      "title": "StoreItem",
+      "description": "Item available in the store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["WALLPAPER", "AVATAR", "BOOSTER"] },
+        "price": { "type": "number" },
+        "rarity": { "type": "string", "enum": ["COMUM", "RARO", "ÉPICO", "LENDÁRIO"] },
+        "image": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "name", "type", "price"]
+    },
+    "GameEvent": {
+      "title": "GameEvent",
+      "description": "Special event with rewards",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "banner": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "rewardXp": { "type": "number" },
+        "rewardBalance": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "UPCOMING", "FINISHED"] }
+      },
+      "required": ["id", "title", "startDate", "endDate"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message between users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "isRead": { "type": "boolean" }
+      },
+      "required": ["id", "senderId", "receiverId", "text"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["ADMIN_ADD", "REWARD", "PURCHASE"] },
+        "description": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "amount", "type"]
+    },
+    "FriendRequest": {
+      "title": "FriendRequest",
+      "description": "Request to be friends",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderId", "receiverId", "status"]
+    },
+    "CommunityGroup": {
+      "title": "CommunityGroup",
+      "description": "Community group for users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "ownerUserId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "deleted"] }
+      },
+      "required": ["id", "name", "ownerUserId"]
+    },
+    "CommunityMember": {
+      "title": "CommunityMember",
+      "description": "Membership in a community group",
+      "type": "object",
+      "properties": {
+        "groupId": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["member", "admin"] },
+        "isBanned": { "type": "boolean" },
+        "bannedAt": { "type": "string", "format": "date-time" },
+        "bannedBy": { "type": "string" }
+      },
+      "required": ["groupId", "userId", "role"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "Post in a community group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "groupId", "userId", "title", "content"]
+    },
+    "GeneralNotification": {
+      "title": "GeneralNotification",
+      "description": "System-wide notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "link": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdByAdminId": { "type": "string" }
+      },
+      "required": ["id", "title", "message"]
+    },
+    "GeneralNotificationRead": {
+      "title": "GeneralNotificationRead",
+      "description": "Tracking of read notifications per user",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "userId": { "type": "string" },
+        "readAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["notificationId", "userId"]
+    },
+    "LevelConfig": {
+      "title": "LevelConfig",
+      "description": "Configuration for XP levels",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "minXp": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "minXp"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Global system feature flags and styles",
+      "type": "object",
+      "properties": {
+        "isCatalogEnabled": { "type": "boolean" },
+        "isLibraryEnabled": { "type": "boolean" },
+        "isStoreEnabled": { "type": "boolean" },
+        "isLivesEnabled": { "type": "boolean" },
+        "isFavoritesEnabled": { "type": "boolean" },
+        "isEventsEnabled": { "type": "boolean" },
+        "isExtrasEnabled": { "type": "boolean" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "borderRadius": { "type": "string" },
+        "fontFamily": { "type": "string" }
+      }
+    },
+    "RewardRoomSettings": {
+      "title": "RewardRoomSettings",
+      "description": "Settings for the reward room and ads",
+      "type": "object",
+      "properties": {
+        "rewardAmount": { "type": "number" },
+        "adDuration": { "type": "number" },
+        "adTitle": { "type": "string" },
+        "adDescription": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "videoUrl": { "type": "string" },
+        "showAds": { "type": "boolean" }
+      }
+    },
+    "ProfileWallpaper": {
+      "title": "ProfileWallpaper",
+      "description": "Wallpaper for user profiles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "category": { "type": "string" },
+        "thumbnail": { "type": "string" }
+      },
+      "required": ["id", "title", "url"]
+    },
+    "PendingValidation": {
+      "title": "PendingValidation",
+      "description": "Achievement validation request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "gameId": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "achievementName": { "type": "string" },
+        "proofUrl": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "confidence": { "type": "string" }
+      },
+      "required": ["id", "userId", "achievementId", "proofUrl"]
+    },
+    "ValidationLog": {
+      "title": "ValidationLog",
+      "description": "Log of achievement validations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "gameId": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "achievementName": { "type": "string" },
+        "status": { "type": "string", "enum": ["APPROVED", "REJECTED", "SUBMITTED"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "adminNote": { "type": "string" }
+      },
+      "required": ["id", "userId", "achievementId", "status"]
+    },
+    "UserGoal": {
+      "title": "UserGoal",
+      "description": "Personal goal for a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "description": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "description"]
+    },
+    "AdminBalanceLog": {
+      "title": "AdminBalanceLog",
+      "description": "Log of balance changes made by admins",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminId", "userId", "amount", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/games/{gameId}": {
+      "schema": "Game",
+      "description": "Game catalog"
+    },
+    "/achievements/{achievementId}": {
+      "schema": "Achievement",
+      "description": "Achievement definitions"
+    },
+    "/users/{userId}/progress/{achievementId}": {
+      "schema": "UserAchievementProgress",
+      "description": "User achievement progress"
+    },
+    "/contents/{contentId}": {
+      "schema": "Content",
+      "description": "Guide content"
+    },
+    "/adminBalanceLogs/{logId}": {
+      "schema": "AdminBalanceLog",
+      "description": "Admin balance change logs"
+    },
+    "/feedbacks/{feedbackId}": {
+      "schema": "Feedback",
+      "description": "Achievement comments"
+    },
+    "/storeItems/{itemId}": {
+      "schema": "StoreItem",
+      "description": "Store items"
+    },
+    "/events/{eventId}": {
+      "schema": "GameEvent",
+      "description": "Game events"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Direct messages"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions"
+    },
+    "/friendRequests/{requestId}": {
+      "schema": "FriendRequest",
+      "description": "Friend requests"
+    },
+    "/communityGroups/{groupId}": {
+      "schema": "CommunityGroup",
+      "description": "Community groups"
+    },
+    "/communityGroups/{groupId}/members/{userId}": {
+      "schema": "CommunityMember",
+      "description": "Community group members"
+    },
+    "/communityGroups/{groupId}/posts/{postId}": {
+      "schema": "CommunityPost",
+      "description": "Community group posts"
+    },
+    "/generalNotifications/{notificationId}": {
+      "schema": "GeneralNotification",
+      "description": "System notifications"
+    },
+    "/generalNotificationsRead/{readId}": {
+      "schema": "GeneralNotificationRead",
+      "description": "Read notification tracking"
+    },
+    "/levels/{levelId}": {
+      "schema": "LevelConfig",
+      "description": "Level configurations"
+    },
+    "/settings/system": {
+      "schema": "SystemSettings",
+      "description": "Global system settings"
+    },
+    "/settings/rewardRoom": {
+      "schema": "RewardRoomSettings",
+      "description": "Reward room settings"
+    },
+    "/wallpapers/{wallpaperId}": {
+      "schema": "ProfileWallpaper",
+      "description": "Profile wallpapers"
+    },
+    "/pendingValidations/{validationId}": {
+      "schema": "PendingValidation",
+      "description": "Pending achievement validations"
+    },
+    "/validationLogs/{logId}": {
+      "schema": "ValidationLog",
+      "description": "Validation history"
+    },
+    "/goals/{goalId}": {
+      "schema": "UserGoal",
+      "description": "User personal goals"
+    }
+  }
+}
